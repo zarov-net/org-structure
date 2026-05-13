@@ -1,0 +1,225 @@
+basePath: /
+definitions:
+  org-structure_internal_model.Department:
+    properties:
+      children:
+        items:
+          $ref: '#/definitions/org-structure_internal_model.Department'
+        type: array
+      created_at:
+        type: string
+      employees:
+        description: Связи
+        items:
+          $ref: '#/definitions/org-structure_internal_model.Employee'
+        type: array
+      id:
+        type: integer
+      name:
+        type: string
+      parent_id:
+        description: nil для корневого подразделения
+        type: integer
+    type: object
+  org-structure_internal_model.Employee:
+    properties:
+      created_at:
+        type: string
+      department_id:
+        type: integer
+      full_name:
+        type: string
+      hired_at:
+        description: формат DATE, может быть null
+        type: string
+      id:
+        type: integer
+      position:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: REST API для управления организационной структурой компании
+  title: API организационной структуры
+  version: "1.0"
+paths:
+  /departments:
+    post:
+      consumes:
+      - application/json
+      description: Создает новое подразделение в организационной структуре
+      parameters:
+      - description: Данные подразделения
+        in: body
+        name: department
+        required: true
+        schema:
+          $ref: '#/definitions/org-structure_internal_model.Department'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Подразделение создано
+          schema:
+            $ref: '#/definitions/org-structure_internal_model.Department'
+        "400":
+          description: Ошибка валидации
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Создать подразделение
+      tags:
+      - Подразделения
+  /departments/{id}:
+    delete:
+      description: 'Удаляет подразделение. Режимы: cascade (каскадное удаление) или
+        reassign (перенос сотрудников)'
+      parameters:
+      - description: ID подразделения
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Режим удаления
+        enum:
+        - cascade
+        - reassign
+        in: query
+        name: mode
+        required: true
+        type: string
+      - description: ID подразделения для переноса сотрудников (обязателен при mode=reassign)
+        in: query
+        name: reassign_to_department_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Подразделение удалено
+        "400":
+          description: Ошибка валидации
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Удалить подразделение
+      tags:
+      - Подразделения
+    get:
+      description: Возвращает подразделение с сотрудниками и дочерними подразделениями
+      parameters:
+      - description: ID подразделения
+        in: path
+        name: id
+        required: true
+        type: integer
+      - default: 1
+        description: Глубина дерева (1-5)
+        in: query
+        maximum: 5
+        minimum: 1
+        name: depth
+        type: integer
+      - default: true
+        description: Включать сотрудников
+        in: query
+        name: include_employees
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Данные подразделения
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Подразделение не найдено
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Получить подразделение
+      tags:
+      - Подразделения
+    patch:
+      consumes:
+      - application/json
+      description: Изменяет название или родителя подразделения
+      parameters:
+      - description: ID подразделения
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Новые данные
+        in: body
+        name: department
+        required: true
+        schema:
+          $ref: '#/definitions/org-structure_internal_model.Department'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Подразделение обновлено
+          schema:
+            $ref: '#/definitions/org-structure_internal_model.Department'
+        "400":
+          description: Ошибка валидации
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Конфликт (цикл в дереве)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Обновить подразделение
+      tags:
+      - Подразделения
+  /departments/{id}/employees:
+    post:
+      consumes:
+      - application/json
+      description: Создает нового сотрудника в указанном подразделении
+      parameters:
+      - description: ID подразделения
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Данные сотрудника
+        in: body
+        name: employee
+        required: true
+        schema:
+          $ref: '#/definitions/org-structure_internal_model.Employee'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Сотрудник создан
+          schema:
+            $ref: '#/definitions/org-structure_internal_model.Employee'
+        "400":
+          description: Ошибка валидации
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Подразделение не найдено
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Создать сотрудника
+      tags:
+      - Сотрудники
+swagger: "2.0"

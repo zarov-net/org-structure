@@ -1,0 +1,334 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "REST API для управления организационной структурой компании",
+        "title": "API организационной структуры",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/",
+    "paths": {
+        "/departments": {
+            "post": {
+                "description": "Создает новое подразделение в организационной структуре",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Подразделения"
+                ],
+                "summary": "Создать подразделение",
+                "parameters": [
+                    {
+                        "description": "Данные подразделения",
+                        "name": "department",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/org-structure_internal_model.Department"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Подразделение создано",
+                        "schema": {
+                            "$ref": "#/definitions/org-structure_internal_model.Department"
+                        }
+                    },
+                    "400": {
+                        "description": "Ошибка валидации",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/departments/{id}": {
+            "get": {
+                "description": "Возвращает подразделение с сотрудниками и дочерними подразделениями",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Подразделения"
+                ],
+                "summary": "Получить подразделение",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID подразделения",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "maximum": 5,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Глубина дерева (1-5)",
+                        "name": "depth",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "default": true,
+                        "description": "Включать сотрудников",
+                        "name": "include_employees",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Данные подразделения",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Подразделение не найдено",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Удаляет подразделение. Режимы: cascade (каскадное удаление) или reassign (перенос сотрудников)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Подразделения"
+                ],
+                "summary": "Удалить подразделение",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID подразделения",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "cascade",
+                            "reassign"
+                        ],
+                        "type": "string",
+                        "description": "Режим удаления",
+                        "name": "mode",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID подразделения для переноса сотрудников (обязателен при mode=reassign)",
+                        "name": "reassign_to_department_id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Подразделение удалено"
+                    },
+                    "400": {
+                        "description": "Ошибка валидации",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "description": "Изменяет название или родителя подразделения",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Подразделения"
+                ],
+                "summary": "Обновить подразделение",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID подразделения",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Новые данные",
+                        "name": "department",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/org-structure_internal_model.Department"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Подразделение обновлено",
+                        "schema": {
+                            "$ref": "#/definitions/org-structure_internal_model.Department"
+                        }
+                    },
+                    "400": {
+                        "description": "Ошибка валидации",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Конфликт (цикл в дереве)",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/departments/{id}/employees": {
+            "post": {
+                "description": "Создает нового сотрудника в указанном подразделении",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Сотрудники"
+                ],
+                "summary": "Создать сотрудника",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID подразделения",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Данные сотрудника",
+                        "name": "employee",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/org-structure_internal_model.Employee"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Сотрудник создан",
+                        "schema": {
+                            "$ref": "#/definitions/org-structure_internal_model.Employee"
+                        }
+                    },
+                    "400": {
+                        "description": "Ошибка валидации",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Подразделение не найдено",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "org-structure_internal_model.Department": {
+            "type": "object",
+            "properties": {
+                "children": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/org-structure_internal_model.Department"
+                    }
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "employees": {
+                    "description": "Связи",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/org-structure_internal_model.Employee"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "parent_id": {
+                    "description": "nil для корневого подразделения",
+                    "type": "integer"
+                }
+            }
+        },
+        "org-structure_internal_model.Employee": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "department_id": {
+                    "type": "integer"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "hired_at": {
+                    "description": "формат DATE, может быть null",
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "position": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

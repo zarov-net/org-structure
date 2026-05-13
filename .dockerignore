@@ -1,0 +1,27 @@
+# Git
+.git
+.gitignore
+
+# Локальные файлы
+.env
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# IDE
+.vscode
+.idea
+
+# Тестовые файлы
+*_test.go
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# Документация
+README.md
+*.md
