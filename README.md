@@ -36,3 +36,4 @@ git clone <repo-url>
 cd org-structure
 docker-compose build
 docker-compose up -d
+http://localhost:ПОРТ(8080)/swagger/index.html
