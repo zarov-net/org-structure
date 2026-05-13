@@ -34,5 +34,5 @@
 ```bash
 git clone <repo-url>
 cd org-structure
-
+docker-compose build
 docker-compose up -d
